@@ -1,0 +1,3 @@
+# mandelbrot
+---
+![](intro.gif)
