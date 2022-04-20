@@ -15,7 +15,7 @@ pub fn escape_point(re: f64, im: f64, limit: u32) -> Escape {
     let mut z = Complex64::new(0.0, 0.0);
     for iterations in 1..=limit {
         z = z * z + c;
-        if z.norm() > 2.0 {
+        if z.norm_sqr() > 4.0 {
             return Escape {
                 iterations,
                 escaped: true,
