@@ -1,6 +1,16 @@
 //! Pure escape-time fractal kernels, independent of terminal I/O.
 
 use num::complex::Complex64;
+mod settings;
+pub use settings::{Error, IterationSettings};
+
+pub fn iterate(re: f64, im: f64, settings: &IterationSettings) -> Result<Escape, Error> {
+    settings.validate()?;
+    if !re.is_finite() || !im.is_finite() {
+        return Err(Error("coordinates must be finite".into()));
+    }
+    Ok(escape_point(re, im, settings.max_iterations))
+}
 
 /// A capped orbit. A bounded result is not proof of set membership.
 #[derive(Clone, Copy, Debug, PartialEq)]
