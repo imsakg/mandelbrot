@@ -13,11 +13,13 @@ impl std::error::Error for Error {}
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct IterationSettings {
     pub max_iterations: u32,
+    pub escape_radius: f64,
 }
 impl Default for IterationSettings {
     fn default() -> Self {
         Self {
             max_iterations: 256,
+            escape_radius: 2.0,
         }
     }
 }
@@ -25,6 +27,14 @@ impl IterationSettings {
     pub fn validate(&self) -> Result<(), Error> {
         if self.max_iterations == 0 || self.max_iterations > 10_000_000 {
             return Err(Error("iterations must be in 1..=10000000".into()));
+        }
+        if !self.escape_radius.is_finite()
+            || self.escape_radius < 2.0
+            || !self.escape_radius.powi(2).is_finite()
+        {
+            return Err(Error(
+                "escape radius must be finite, at least two, and squareable".into(),
+            ));
         }
         Ok(())
     }

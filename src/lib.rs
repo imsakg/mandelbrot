@@ -9,7 +9,12 @@ pub fn iterate(re: f64, im: f64, settings: &IterationSettings) -> Result<Escape,
     if !re.is_finite() || !im.is_finite() {
         return Err(Error("coordinates must be finite".into()));
     }
-    Ok(escape_point(re, im, settings.max_iterations))
+    Ok(orbit(
+        re,
+        im,
+        settings.max_iterations,
+        settings.escape_radius,
+    ))
 }
 
 /// A capped orbit. A bounded result is not proof of set membership.
@@ -21,11 +26,15 @@ pub struct Escape {
 
 /// Iterate `z = z² + c` from zero, counting completed updates.
 pub fn escape_point(re: f64, im: f64, limit: u32) -> Escape {
+    orbit(re, im, limit, 2.0)
+}
+
+fn orbit(re: f64, im: f64, limit: u32, radius: f64) -> Escape {
     let c = Complex64::new(re, im);
     let mut z = Complex64::new(0.0, 0.0);
     for iterations in 1..=limit {
         z = z * z + c;
-        if z.norm_sqr() > 4.0 {
+        if z.norm_sqr() > radius * radius {
             return Escape {
                 iterations,
                 escaped: true,
