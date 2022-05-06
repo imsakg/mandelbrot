@@ -2,7 +2,7 @@
 
 use num::complex::Complex64;
 mod settings;
-pub use settings::{Error, IterationSettings};
+pub use settings::{Error, Fractal, IterationSettings};
 
 pub fn iterate(re: f64, im: f64, settings: &IterationSettings) -> Result<Escape, Error> {
     settings.validate()?;
@@ -14,6 +14,7 @@ pub fn iterate(re: f64, im: f64, settings: &IterationSettings) -> Result<Escape,
         im,
         settings.max_iterations,
         settings.escape_radius,
+        settings.fractal,
     ))
 }
 
@@ -26,12 +27,14 @@ pub struct Escape {
 
 /// Iterate `z = z² + c` from zero, counting completed updates.
 pub fn escape_point(re: f64, im: f64, limit: u32) -> Escape {
-    orbit(re, im, limit, 2.0)
+    orbit(re, im, limit, 2.0, Fractal::Mandelbrot)
 }
 
-fn orbit(re: f64, im: f64, limit: u32, radius: f64) -> Escape {
-    let c = Complex64::new(re, im);
-    let mut z = Complex64::new(0.0, 0.0);
+fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape {
+    let (mut z, c) = match fractal {
+        Fractal::Mandelbrot => (Complex64::new(0.0, 0.0), Complex64::new(re, im)),
+        Fractal::Julia { re: cr, im: ci } => (Complex64::new(re, im), Complex64::new(cr, ci)),
+    };
     for iterations in 1..=limit {
         z = z * z + c;
         if z.norm_sqr() > radius * radius {

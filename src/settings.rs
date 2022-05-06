@@ -11,15 +11,23 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Fractal {
+    Mandelbrot,
+    Julia { re: f64, im: f64 },
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct IterationSettings {
     pub max_iterations: u32,
     pub escape_radius: f64,
+    pub fractal: Fractal,
 }
 impl Default for IterationSettings {
     fn default() -> Self {
         Self {
             max_iterations: 256,
             escape_radius: 2.0,
+            fractal: Fractal::Mandelbrot,
         }
     }
 }
@@ -35,6 +43,11 @@ impl IterationSettings {
             return Err(Error(
                 "escape radius must be finite, at least two, and squareable".into(),
             ));
+        }
+        if let Fractal::Julia { re, im } = self.fractal {
+            if !re.is_finite() || !im.is_finite() {
+                return Err(Error("Julia constant must be finite".into()));
+            }
         }
         Ok(())
     }
