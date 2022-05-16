@@ -13,6 +13,7 @@ impl std::error::Error for Error {}
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Fractal {
     Mandelbrot,
+    BurningShip,
     Julia { re: f64, im: f64 },
 }
 
