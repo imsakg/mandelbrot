@@ -32,7 +32,7 @@ pub fn escape_point(re: f64, im: f64, limit: u32) -> Escape {
 
 fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape {
     let (mut z, c) = match fractal {
-        Fractal::Mandelbrot | Fractal::BurningShip => {
+        Fractal::Mandelbrot | Fractal::BurningShip | Fractal::Multibrot { .. } => {
             (Complex64::new(0.0, 0.0), Complex64::new(re, im))
         }
         Fractal::Julia { re: cr, im: ci } => (Complex64::new(re, im), Complex64::new(cr, ci)),
@@ -41,7 +41,10 @@ fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape 
         if fractal == Fractal::BurningShip {
             z = Complex64::new(z.re.abs(), z.im.abs());
         }
-        z = z * z + c;
+        z = match fractal {
+            Fractal::Multibrot { power } if power != 2 => z.powu(power) + c,
+            _ => z * z + c,
+        };
         if z.norm_sqr() > radius * radius {
             return Escape {
                 iterations,

@@ -14,6 +14,7 @@ impl std::error::Error for Error {}
 pub enum Fractal {
     Mandelbrot,
     BurningShip,
+    Multibrot { power: u32 },
     Julia { re: f64, im: f64 },
 }
 
@@ -48,6 +49,11 @@ impl IterationSettings {
         if let Fractal::Julia { re, im } = self.fractal {
             if !re.is_finite() || !im.is_finite() {
                 return Err(Error("Julia constant must be finite".into()));
+            }
+        }
+        if let Fractal::Multibrot { power } = self.fractal {
+            if !(2..=8).contains(&power) {
+                return Err(Error("Multibrot power must be in 2..=8".into()));
             }
         }
         Ok(())
