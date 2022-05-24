@@ -23,6 +23,23 @@ pub fn iterate(re: f64, im: f64, settings: &IterationSettings) -> Result<Escape,
 pub struct Escape {
     pub iterations: u32,
     pub escaped: bool,
+    pub norm_sqr: f64,
+}
+
+impl Escape {
+    /// Continuous escape count. Overflow and invalid powers fall back to integer counts.
+    pub fn smooth(self, power: u32) -> f64 {
+        if !self.escaped || power < 2 {
+            return self.iterations as f64;
+        }
+        let value =
+            self.iterations as f64 + 1.0 - (0.5 * self.norm_sqr.ln()).ln() / (power as f64).ln();
+        if value.is_finite() {
+            value
+        } else {
+            self.iterations as f64
+        }
+    }
 }
 
 /// Iterate `z = z² + c` from zero, counting completed updates.
@@ -49,11 +66,13 @@ fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape 
             return Escape {
                 iterations,
                 escaped: true,
+                norm_sqr: z.norm_sqr(),
             };
         }
     }
     Escape {
         iterations: limit,
         escaped: false,
+        norm_sqr: z.norm_sqr(),
     }
 }
