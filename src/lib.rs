@@ -24,6 +24,7 @@ pub struct Escape {
     pub iterations: u32,
     pub escaped: bool,
     pub norm_sqr: f64,
+    pub distance: Option<f64>,
 }
 
 impl Escape {
@@ -54,7 +55,22 @@ fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape 
         }
         Fractal::Julia { re: cr, im: ci } => (Complex64::new(re, im), Complex64::new(cr, ci)),
     };
+    let mut derivative = if matches!(fractal, Fractal::Julia { .. }) {
+        Complex64::new(1.0, 0.0)
+    } else {
+        Complex64::new(0.0, 0.0)
+    };
+    let power = match fractal {
+        Fractal::Multibrot { power } => power,
+        _ => 2,
+    };
     for iterations in 1..=limit {
+        let addition = if matches!(fractal, Fractal::Julia { .. }) {
+            0.0
+        } else {
+            1.0
+        };
+        derivative = (power as f64) * z.powu(power - 1) * derivative + addition;
         if fractal == Fractal::BurningShip {
             z = Complex64::new(z.re.abs(), z.im.abs());
         }
@@ -67,6 +83,15 @@ fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape 
                 iterations,
                 escaped: true,
                 norm_sqr: z.norm_sqr(),
+                distance: {
+                    let r = z.norm();
+                    let d = r * r.ln() / derivative.norm();
+                    if fractal != Fractal::BurningShip && d.is_finite() && d > 0.0 {
+                        Some(d)
+                    } else {
+                        None
+                    }
+                },
             };
         }
     }
@@ -74,5 +99,6 @@ fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape 
         iterations: limit,
         escaped: false,
         norm_sqr: z.norm_sqr(),
+        distance: None,
     }
 }
