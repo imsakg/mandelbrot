@@ -43,12 +43,30 @@ impl Escape {
     }
 }
 
+/// Analytic Mandelbrot interior tests; never apply these to Julia or Burning Ship.
+pub fn in_main_bulbs(re: f64, im: f64) -> bool {
+    if !re.is_finite() || !im.is_finite() || re.abs() > 2.0 || im.abs() > 2.0 {
+        return false;
+    }
+    let y2 = im * im;
+    let q = (re - 0.25) * (re - 0.25) + y2;
+    q * (q + re - 0.25) < 0.25 * y2 || (re + 1.0) * (re + 1.0) + y2 < 0.0625
+}
+
 /// Iterate `z = z² + c` from zero, counting completed updates.
 pub fn escape_point(re: f64, im: f64, limit: u32) -> Escape {
     orbit(re, im, limit, 2.0, Fractal::Mandelbrot)
 }
 
 fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape {
+    if fractal == Fractal::Mandelbrot && in_main_bulbs(re, im) {
+        return Escape {
+            iterations: limit,
+            escaped: false,
+            norm_sqr: 0.0,
+            distance: None,
+        };
+    }
     let (mut z, c) = match fractal {
         Fractal::Mandelbrot | Fractal::BurningShip | Fractal::Multibrot { .. } => {
             (Complex64::new(0.0, 0.0), Complex64::new(re, im))
