@@ -2,7 +2,9 @@
 
 use num::complex::Complex64;
 mod settings;
+mod viewport;
 pub use settings::{Error, Fractal, IterationSettings};
+pub use viewport::Viewport;
 
 pub fn iterate(re: f64, im: f64, settings: &IterationSettings) -> Result<Escape, Error> {
     settings.validate()?;
