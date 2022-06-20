@@ -19,6 +19,21 @@ impl Default for Viewport {
     }
 }
 impl Viewport {
+    pub fn pixel_center(
+        self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+    ) -> Result<(f64, f64), Error> {
+        if width == 0 || height == 0 || x >= width || y >= height {
+            return Err(Error("pixel is outside nonempty image dimensions".into()));
+        }
+        Ok(self.coordinate(
+            (x as f64 + 0.5) / width as f64,
+            (y as f64 + 0.5) / height as f64,
+        ))
+    }
     pub fn new(x_min: f64, x_max: f64, y_min: f64, y_max: f64) -> Result<Self, Error> {
         let values = [x_min, x_max, y_min, y_max];
         let dx = x_max - x_min;
