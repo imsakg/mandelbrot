@@ -19,6 +19,20 @@ impl Default for Viewport {
     }
 }
 impl Viewport {
+    /// Factors greater than one zoom in; factors between zero and one zoom out.
+    pub fn zoom(self, factor: f64) -> Result<Self, Error> {
+        if !factor.is_finite() || factor <= 0.0 {
+            return Err(Error("zoom factor must be finite and positive".into()));
+        }
+        let (cx, cy) = self.coordinate(0.5, 0.5);
+        let (dx, dy) = self.spans();
+        Self::new(
+            cx - dx / factor / 2.0,
+            cx + dx / factor / 2.0,
+            cy - dy / factor / 2.0,
+            cy + dy / factor / 2.0,
+        )
+    }
     pub fn pixel_center(
         self,
         x: usize,
