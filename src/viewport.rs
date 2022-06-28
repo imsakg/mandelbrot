@@ -19,6 +19,22 @@ impl Default for Viewport {
     }
 }
 impl Viewport {
+    pub fn zoom_at(self, factor: f64, u: f64, v: f64) -> Result<Self, Error> {
+        if !factor.is_finite()
+            || factor <= 0.0
+            || !(0.0..=1.0).contains(&u)
+            || !(0.0..=1.0).contains(&v)
+        {
+            return Err(Error(
+                "zoom requires a positive factor and anchors in 0..=1".into(),
+            ));
+        }
+        let (x, y) = self.coordinate(u, v);
+        let (dx, dy) = self.spans();
+        let w = dx / factor;
+        let h = dy / factor;
+        Self::new(x - u * w, x + (1.0 - u) * w, y - v * h, y + (1.0 - v) * h)
+    }
     /// Factors greater than one zoom in; factors between zero and one zoom out.
     pub fn zoom(self, factor: f64) -> Result<Self, Error> {
         if !factor.is_finite() || factor <= 0.0 {
