@@ -19,6 +19,19 @@ impl Default for Viewport {
     }
 }
 impl Viewport {
+    /// Translate by fractions of the current spans, not absolute world units.
+    pub fn pan(self, horizontal: f64, vertical: f64) -> Result<Self, Error> {
+        if !horizontal.is_finite() || !vertical.is_finite() {
+            return Err(Error("pan offsets must be finite".into()));
+        }
+        let (dx, dy) = self.spans();
+        Self::new(
+            self.x_min + dx * horizontal,
+            self.x_max + dx * horizontal,
+            self.y_min + dy * vertical,
+            self.y_max + dy * vertical,
+        )
+    }
     pub fn zoom_at(self, factor: f64, u: f64, v: f64) -> Result<Self, Error> {
         if !factor.is_finite()
             || factor <= 0.0
