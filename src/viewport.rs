@@ -19,6 +19,20 @@ impl Default for Viewport {
     }
 }
 impl Viewport {
+    /// Expand the shorter axis to match a physical width/height aspect ratio.
+    pub fn fit_aspect(self, aspect: f64) -> Result<Self, Error> {
+        if !aspect.is_finite() || aspect <= 0.0 {
+            return Err(Error("aspect must be finite and positive".into()));
+        }
+        let (mut dx, mut dy) = self.spans();
+        let (cx, cy) = self.coordinate(0.5, 0.5);
+        if dx / dy < aspect {
+            dx = dy * aspect;
+        } else {
+            dy = dx / aspect;
+        }
+        Self::new(cx - dx / 2.0, cx + dx / 2.0, cy - dy / 2.0, cy + dy / 2.0)
+    }
     /// Translate by fractions of the current spans, not absolute world units.
     pub fn pan(self, horizontal: f64, vertical: f64) -> Result<Self, Error> {
         if !horizontal.is_finite() || !vertical.is_finite() {
