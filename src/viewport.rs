@@ -19,6 +19,25 @@ impl Default for Viewport {
     }
 }
 impl Viewport {
+    /// Reject deep zooms whose adjacent pixels have collapsed in f64 arithmetic.
+    pub fn validate_resolution(self, width: usize, height: usize) -> Result<(), Error> {
+        if width == 0 || height == 0 {
+            return Err(Error("dimensions must be positive".into()));
+        }
+        let (dx, dy) = self.spans();
+        let sx = dx / width as f64;
+        let sy = dy / height as f64;
+        if sx <= 0.0
+            || sy <= 0.0
+            || (width > 1 && (self.x_min + sx == self.x_min || self.x_max - sx == self.x_max))
+            || (height > 1 && (self.y_min + sy == self.y_min || self.y_max - sy == self.y_max))
+        {
+            return Err(Error(
+                "zoom exceeds f64 pixel precision; use fewer pixels or zoom out".into(),
+            ));
+        }
+        Ok(())
+    }
     /// Expand the shorter axis to match a physical width/height aspect ratio.
     pub fn fit_aspect(self, aspect: f64) -> Result<Self, Error> {
         if !aspect.is_finite() || aspect <= 0.0 {
