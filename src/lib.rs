@@ -1,7 +1,9 @@
 //! Pure escape-time fractal kernels, independent of terminal I/O.
 
 use num::complex::Complex64;
+mod navigation;
 mod settings;
+pub use navigation::Navigation;
 mod viewport;
 pub use settings::{Error, Fractal, IterationSettings};
 pub use viewport::Viewport;
