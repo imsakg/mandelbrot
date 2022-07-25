@@ -2,8 +2,10 @@
 
 use num::complex::Complex64;
 mod navigation;
+mod render;
 mod settings;
 pub use navigation::Navigation;
+pub use render::{RenderSettings, MAX_PIXELS};
 mod viewport;
 pub use settings::{Error, Fractal, IterationSettings};
 pub use viewport::Viewport;
