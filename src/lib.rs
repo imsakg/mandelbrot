@@ -5,7 +5,7 @@ mod navigation;
 mod render;
 mod settings;
 pub use navigation::Navigation;
-pub use render::{RenderSettings, MAX_PIXELS};
+pub use render::{render, Frame, RenderSettings, MAX_PIXELS};
 mod viewport;
 pub use settings::{Error, Fractal, IterationSettings};
 pub use viewport::Viewport;
@@ -15,13 +15,17 @@ pub fn iterate(re: f64, im: f64, settings: &IterationSettings) -> Result<Escape,
     if !re.is_finite() || !im.is_finite() {
         return Err(Error("coordinates must be finite".into()));
     }
-    Ok(orbit(
+    Ok(sample(re, im, settings))
+}
+
+pub(crate) fn sample(re: f64, im: f64, settings: &IterationSettings) -> Escape {
+    orbit(
         re,
         im,
         settings.max_iterations,
         settings.escape_radius,
         settings.fractal,
-    ))
+    )
 }
 
 /// A capped orbit. A bounded result is not proof of set membership.
