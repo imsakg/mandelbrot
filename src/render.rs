@@ -9,6 +9,20 @@ pub struct Frame {
     samples: Vec<Escape>,
 }
 impl Frame {
+    pub fn row(&self, y: usize) -> Option<&[Escape]> {
+        if y >= self.height() {
+            None
+        } else {
+            Some(&self.samples[y * self.width()..(y + 1) * self.width()])
+        }
+    }
+    pub fn at(&self, x: usize, y: usize) -> Option<&Escape> {
+        if x >= self.width() || y >= self.height() {
+            None
+        } else {
+            self.samples.get(y * self.width() + x)
+        }
+    }
     pub fn width(&self) -> usize {
         self.settings.width
     }
