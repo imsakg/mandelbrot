@@ -5,7 +5,7 @@ mod navigation;
 mod render;
 mod settings;
 pub use navigation::Navigation;
-pub use render::{render, Frame, RenderSettings, MAX_PIXELS};
+pub use render::{render, Frame, RenderSettings, Statistics, MAX_PIXELS};
 mod viewport;
 pub use settings::{Error, Fractal, IterationSettings};
 pub use viewport::Viewport;

@@ -8,7 +8,28 @@ pub struct Frame {
     settings: RenderSettings,
     samples: Vec<Escape>,
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Statistics {
+    pub escaped: usize,
+    pub bounded: usize,
+    pub iteration_sum: u64,
+}
 impl Frame {
+    pub fn statistics(&self) -> Statistics {
+        let escaped = self.samples.iter().filter(|p| p.escaped).count();
+        Statistics {
+            escaped,
+            bounded: self.samples.len() - escaped,
+            iteration_sum: self.samples.iter().map(|p| p.iterations as u64).sum(),
+        }
+    }
+    pub fn histogram(&self) -> std::collections::BTreeMap<u32, usize> {
+        let mut bins = std::collections::BTreeMap::new();
+        for p in &self.samples {
+            *bins.entry(p.iterations).or_default() += 1;
+        }
+        bins
+    }
     pub fn row(&self, y: usize) -> Option<&[Escape]> {
         if y >= self.height() {
             None
