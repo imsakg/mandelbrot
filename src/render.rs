@@ -15,6 +15,23 @@ pub struct Statistics {
     pub iteration_sum: u64,
 }
 impl Frame {
+    pub fn ascii(&self) -> String {
+        const GLYPHS: &[u8] = b" .:-=+*#%@";
+        let mut text = String::with_capacity(self.samples.len() + self.height());
+        let limit = self.settings.iterations.max_iterations as usize;
+        for row in self.samples.chunks(self.width()) {
+            for p in row {
+                let index = if p.escaped {
+                    (p.iterations as usize * (GLYPHS.len() - 2) / limit).min(GLYPHS.len() - 2)
+                } else {
+                    GLYPHS.len() - 1
+                };
+                text.push(GLYPHS[index] as char);
+            }
+            text.push('\n');
+        }
+        text
+    }
     pub fn statistics(&self) -> Statistics {
         let escaped = self.samples.iter().filter(|p| p.escaped).count();
         Statistics {
