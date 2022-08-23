@@ -2,7 +2,9 @@
 
 use num::complex::Complex64;
 mod navigation;
+mod palette;
 mod render;
+pub use palette::Rgb;
 mod settings;
 pub use navigation::Navigation;
 pub use render::{render, Frame, RenderSettings, Statistics, MAX_PIXELS};
