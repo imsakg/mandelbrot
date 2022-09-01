@@ -1,4 +1,43 @@
-use crate::Error;
+use crate::{Error, Fractal, Frame};
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ColorSettings {
+    pub palette: Palette,
+    pub smooth: bool,
+}
+impl Default for ColorSettings {
+    fn default() -> Self {
+        Self {
+            palette: Palette::Ocean,
+            smooth: true,
+        }
+    }
+}
+impl Frame {
+    pub fn colorize(&self, colors: &ColorSettings) -> Result<Vec<Rgb>, Error> {
+        let limit = self.settings().iterations.max_iterations as f64;
+        let power = match self.settings().iterations.fractal {
+            Fractal::Multibrot { power } => power,
+            _ => 2,
+        };
+        Ok(self
+            .samples()
+            .iter()
+            .map(|p| {
+                if !p.escaped {
+                    Rgb(0, 0, 0)
+                } else {
+                    let value = if colors.smooth {
+                        p.smooth(power)
+                    } else {
+                        p.iterations as f64
+                    };
+                    colors.palette.sample(value / limit)
+                }
+            })
+            .collect())
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Palette {
