@@ -4,17 +4,36 @@ use crate::{Error, Fractal, Frame};
 pub struct ColorSettings {
     pub palette: Palette,
     pub smooth: bool,
+    pub cycles: f64,
+    pub shift: f64,
 }
 impl Default for ColorSettings {
     fn default() -> Self {
         Self {
             palette: Palette::Ocean,
             smooth: true,
+            cycles: 1.0,
+            shift: 0.0,
         }
+    }
+}
+impl ColorSettings {
+    pub fn validate(&self) -> Result<(), Error> {
+        if !self.cycles.is_finite()
+            || self.cycles <= 0.0
+            || self.cycles > 10000.0
+            || !self.shift.is_finite()
+        {
+            return Err(Error(
+                "palette cycles must be in (0,10000] and shift must be finite".into(),
+            ));
+        }
+        Ok(())
     }
 }
 impl Frame {
     pub fn colorize(&self, colors: &ColorSettings) -> Result<Vec<Rgb>, Error> {
+        colors.validate()?;
         let limit = self.settings().iterations.max_iterations as f64;
         let power = match self.settings().iterations.fractal {
             Fractal::Multibrot { power } => power,
@@ -32,7 +51,10 @@ impl Frame {
                     } else {
                         p.iterations as f64
                     };
-                    colors.palette.sample(value / limit)
+                    colors.palette.sample(
+                        (value / limit * colors.cycles + colors.shift.rem_euclid(1.0))
+                            .rem_euclid(1.0),
+                    )
                 }
             })
             .collect())
