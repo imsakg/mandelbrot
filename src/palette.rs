@@ -6,6 +6,7 @@ pub struct ColorSettings {
     pub smooth: bool,
     pub cycles: f64,
     pub shift: f64,
+    pub gamma: f64,
 }
 impl Default for ColorSettings {
     fn default() -> Self {
@@ -14,6 +15,7 @@ impl Default for ColorSettings {
             smooth: true,
             cycles: 1.0,
             shift: 0.0,
+            gamma: 1.0,
         }
     }
 }
@@ -27,6 +29,9 @@ impl ColorSettings {
             return Err(Error(
                 "palette cycles must be in (0,10000] and shift must be finite".into(),
             ));
+        }
+        if !self.gamma.is_finite() || self.gamma <= 0.0 || self.gamma > 100.0 {
+            return Err(Error("gamma must be in (0,100]".into()));
         }
         Ok(())
     }
@@ -56,6 +61,11 @@ impl Frame {
                             .rem_euclid(1.0),
                     )
                 }
+            })
+            .map(|rgb| {
+                let adjust =
+                    |v: u8| ((v as f64 / 255.0).powf(1.0 / colors.gamma) * 255.0).round() as u8;
+                Rgb(adjust(rgb.0), adjust(rgb.1), adjust(rgb.2))
             })
             .collect())
     }
