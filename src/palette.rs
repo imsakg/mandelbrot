@@ -7,6 +7,7 @@ pub struct ColorSettings {
     pub cycles: f64,
     pub shift: f64,
     pub gamma: f64,
+    pub histogram: bool,
 }
 impl Default for ColorSettings {
     fn default() -> Self {
@@ -16,6 +17,7 @@ impl Default for ColorSettings {
             cycles: 1.0,
             shift: 0.0,
             gamma: 1.0,
+            histogram: false,
         }
     }
 }
@@ -44,6 +46,19 @@ impl Frame {
             Fractal::Multibrot { power } => power,
             _ => 2,
         };
+        let mut equalized = std::collections::BTreeMap::new();
+        if colors.histogram {
+            let mut bins = std::collections::BTreeMap::<u32, usize>::new();
+            for p in self.samples().iter().filter(|p| p.escaped) {
+                *bins.entry(p.iterations).or_default() += 1;
+            }
+            let total = bins.values().sum::<usize>() as f64;
+            let mut cumulative = 0.0;
+            for (iteration, count) in bins {
+                cumulative += count as f64;
+                equalized.insert(iteration, (cumulative - count as f64 / 2.0) / total);
+            }
+        }
         Ok(self
             .samples()
             .iter()
@@ -57,8 +72,13 @@ impl Frame {
                         p.iterations as f64
                     };
                     colors.palette.sample(
-                        (value / limit * colors.cycles + colors.shift.rem_euclid(1.0))
-                            .rem_euclid(1.0),
+                        (equalized
+                            .get(&p.iterations)
+                            .copied()
+                            .unwrap_or(value / limit)
+                            * colors.cycles
+                            + colors.shift.rem_euclid(1.0))
+                        .rem_euclid(1.0),
                     )
                 }
             })
