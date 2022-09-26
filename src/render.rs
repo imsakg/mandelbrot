@@ -2,6 +2,53 @@ use crate::{sample, Error, Escape, IterationSettings, Viewport};
 
 pub const MAX_PIXELS: usize = 16_000_000;
 
+/// Render an n×n regular subpixel grid and average colors, with n in 1..=4.
+pub fn render_rgb(
+    settings: &RenderSettings,
+    colors: &crate::ColorSettings,
+    samples: u8,
+) -> Result<Vec<crate::Rgb>, Error> {
+    settings.validate()?;
+    colors.validate()?;
+    if !(1..=4).contains(&samples) {
+        return Err(Error("supersampling must be in 1..=4".into()));
+    }
+    let n = samples as usize;
+    let mut high = settings.clone();
+    high.width = high
+        .width
+        .checked_mul(n)
+        .ok_or_else(|| Error("supersampling width overflow".into()))?;
+    high.height = high
+        .height
+        .checked_mul(n)
+        .ok_or_else(|| Error("supersampling height overflow".into()))?;
+    let pixels = render(&high)?.colorize(colors)?;
+    let mut result = Vec::with_capacity(settings.width * settings.height);
+    let count = (n * n) as u32;
+    for y in 0..settings.height {
+        for x in 0..settings.width {
+            let mut sum = [0u32; 3];
+            for sy in 0..n {
+                for sx in 0..n {
+                    for (channel, value) in sum
+                        .iter_mut()
+                        .zip(pixels[(y * n + sy) * high.width + x * n + sx].bytes())
+                    {
+                        *channel += value as u32;
+                    }
+                }
+            }
+            result.push(crate::Rgb(
+                ((sum[0] + count / 2) / count) as u8,
+                ((sum[1] + count / 2) / count) as u8,
+                ((sum[2] + count / 2) / count) as u8,
+            ));
+        }
+    }
+    Ok(result)
+}
+
 /// Flat, row-major orbit data; dimensions cannot drift from buffer length.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Frame {
