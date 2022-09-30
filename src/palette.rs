@@ -8,6 +8,7 @@ pub struct ColorSettings {
     pub shift: f64,
     pub gamma: f64,
     pub histogram: bool,
+    pub interior: Rgb,
 }
 impl Default for ColorSettings {
     fn default() -> Self {
@@ -18,6 +19,7 @@ impl Default for ColorSettings {
             shift: 0.0,
             gamma: 1.0,
             histogram: false,
+            interior: Rgb(0, 0, 0),
         }
     }
 }
@@ -64,7 +66,7 @@ impl Frame {
             .iter()
             .map(|p| {
                 if !p.escaped {
-                    Rgb(0, 0, 0)
+                    colors.interior
                 } else {
                     let value = if colors.smooth {
                         p.smooth(power)
@@ -82,7 +84,11 @@ impl Frame {
                     )
                 }
             })
-            .map(|rgb| {
+            .zip(self.samples())
+            .map(|(rgb, orbit)| {
+                if !orbit.escaped {
+                    return colors.interior;
+                }
                 let adjust =
                     |v: u8| ((v as f64 / 255.0).powf(1.0 / colors.gamma) * 255.0).round() as u8;
                 Rgb(adjust(rgb.0), adjust(rgb.1), adjust(rgb.2))
