@@ -1,7 +1,9 @@
 //! Pure escape-time fractal kernels, independent of terminal I/O.
 
 use num::complex::Complex64;
+mod image;
 mod navigation;
+pub use image::Image;
 mod palette;
 mod render;
 pub use palette::{ColorSettings, Palette, Rgb};
