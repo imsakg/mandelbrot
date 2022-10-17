@@ -1,6 +1,7 @@
 //! Pure escape-time fractal kernels, independent of terminal I/O.
 
 use num::complex::Complex64;
+mod checksum;
 mod export;
 mod image;
 mod navigation;
