@@ -1,4 +1,25 @@
-use crate::Image;
+use crate::{Error, Image};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ImageFormat {
+    Ppm,
+    Png,
+}
+impl ImageFormat {
+    pub fn from_path(path: &std::path::Path) -> Result<Self, Error> {
+        match path
+            .extension()
+            .and_then(|v| v.to_str())
+            .map(str::to_ascii_lowercase)
+            .as_deref()
+        {
+            Some("ppm") => Ok(Self::Ppm),
+            Some("png") => Ok(Self::Png),
+            _ => Err(Error("output extension must be .png or .ppm".into())),
+        }
+    }
+}
+
 use std::io::{self, Write};
 
 fn write_chunk<W: Write>(writer: &mut W, name: &[u8; 4], data: &[u8]) -> io::Result<()> {
@@ -14,6 +35,12 @@ fn write_chunk<W: Write>(writer: &mut W, name: &[u8; 4], data: &[u8]) -> io::Res
 }
 
 impl Image {
+    pub fn write<W: Write>(&self, writer: &mut W, format: ImageFormat) -> io::Result<()> {
+        match format {
+            ImageFormat::Ppm => self.write_ppm(writer),
+            ImageFormat::Png => self.write_png(writer),
+        }
+    }
     /// Write RGB8 PNG with uncompressed DEFLATE blocks. Portable, not size-optimized.
     pub fn write_png<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         writer.write_all(b"\x89PNG\r\n\x1a\n")?;
