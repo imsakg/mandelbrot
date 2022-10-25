@@ -35,6 +35,22 @@ fn write_chunk<W: Write>(writer: &mut W, name: &[u8; 4], data: &[u8]) -> io::Res
 }
 
 impl Image {
+    /// Save without overwriting existing paths; remove partial output on encode/flush errors.
+    pub fn save(&self, path: &std::path::Path, format: ImageFormat) -> io::Result<()> {
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)?;
+        let mut writer = io::BufWriter::new(file);
+        let result = self
+            .write(&mut writer, format)
+            .and_then(|()| writer.flush());
+        drop(writer);
+        if result.is_err() {
+            let _ = std::fs::remove_file(path);
+        }
+        result
+    }
     pub fn write<W: Write>(&self, writer: &mut W, format: ImageFormat) -> io::Result<()> {
         match format {
             ImageFormat::Ppm => self.write_ppm(writer),
