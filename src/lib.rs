@@ -13,7 +13,9 @@ pub use palette::{ColorSettings, Palette, Rgb};
 mod settings;
 mod tile;
 pub use navigation::Navigation;
-pub use render::{render, render_rgb, Frame, RenderSettings, Statistics, MAX_PIXELS};
+pub use render::{
+    render, render_parallel, render_rgb, Frame, RenderSettings, Statistics, MAX_PIXELS,
+};
 pub use tile::{tiles, Tile};
 mod viewport;
 pub use settings::{Error, Fractal, IterationSettings};

@@ -122,6 +122,61 @@ impl Frame {
     }
 }
 
+pub fn render_parallel(settings: &RenderSettings, workers: usize) -> Result<Frame, Error> {
+    let area = settings.validate()?;
+    if !(1..=64).contains(&workers) {
+        return Err(Error("worker count must be in 1..=64".into()));
+    }
+    if workers == 1 {
+        return render(settings);
+    }
+    let workers = workers.min(settings.height);
+    let rows = settings.height / workers + usize::from(settings.height % workers != 0);
+    let mut samples = Vec::new();
+    samples
+        .try_reserve_exact(area)
+        .map_err(|e| Error(format!("cannot allocate frame: {e}")))?;
+    samples.resize(
+        area,
+        Escape {
+            iterations: 0,
+            escaped: false,
+            norm_sqr: 0.0,
+            distance: None,
+        },
+    );
+    std::thread::scope(|scope| -> Result<(), Error> {
+        let mut handles = Vec::new();
+        for (stripe, chunk) in samples.chunks_mut(rows * settings.width).enumerate() {
+            let handle = std::thread::Builder::new()
+                .name(format!("fractal-{stripe}"))
+                .spawn_scoped(scope, move || {
+                    for (i, p) in chunk.iter_mut().enumerate() {
+                        let x = i % settings.width;
+                        let y = stripe * rows + i / settings.width;
+                        let (re, im) = settings.viewport.coordinate(
+                            (x as f64 + 0.5) / settings.width as f64,
+                            (y as f64 + 0.5) / settings.height as f64,
+                        );
+                        *p = sample(re, im, &settings.iterations);
+                    }
+                })
+                .map_err(|e| Error(format!("cannot spawn render worker: {e}")))?;
+            handles.push(handle);
+        }
+        for handle in handles {
+            handle
+                .join()
+                .map_err(|_| Error("render worker panicked".into()))?;
+        }
+        Ok(())
+    })?;
+    Ok(Frame {
+        settings: settings.clone(),
+        samples,
+    })
+}
+
 pub fn render(settings: &RenderSettings) -> Result<Frame, Error> {
     let area = settings.validate()?;
     let mut samples = Vec::new();
