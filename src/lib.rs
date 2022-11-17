@@ -14,7 +14,8 @@ mod settings;
 mod tile;
 pub use navigation::Navigation;
 pub use render::{
-    render, render_parallel, render_rgb, Frame, RenderSettings, Statistics, MAX_PIXELS,
+    render, render_parallel, render_rgb, render_with_progress, Frame, RenderSettings, Statistics,
+    MAX_PIXELS,
 };
 pub use tile::{tiles, Tile};
 mod viewport;

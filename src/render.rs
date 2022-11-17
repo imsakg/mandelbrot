@@ -178,6 +178,14 @@ pub fn render_parallel(settings: &RenderSettings, workers: usize) -> Result<Fram
 }
 
 pub fn render(settings: &RenderSettings) -> Result<Frame, Error> {
+    render_with_progress(settings, |_, _| true)
+}
+
+/// Notify after each completed row; returning false cancels without returning a partial frame.
+pub fn render_with_progress<F: FnMut(usize, usize) -> bool>(
+    settings: &RenderSettings,
+    mut progress: F,
+) -> Result<Frame, Error> {
     let area = settings.validate()?;
     let mut samples = Vec::new();
     samples
@@ -190,6 +198,9 @@ pub fn render(settings: &RenderSettings) -> Result<Frame, Error> {
                 (y as f64 + 0.5) / settings.height as f64,
             );
             samples.push(sample(re, im, &settings.iterations));
+        }
+        if !progress(y + 1, settings.height) {
+            return Err(Error(format!("render canceled after row {}", y + 1)));
         }
     }
     Ok(Frame {
