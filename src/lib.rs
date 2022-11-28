@@ -2,6 +2,7 @@
 
 use num::complex::Complex64;
 mod checksum;
+pub mod cli;
 mod export;
 pub use export::ImageFormat;
 mod image;
