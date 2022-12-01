@@ -90,6 +90,10 @@ fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape 
             distance: None,
         };
     }
+    let radius = match fractal {
+        Fractal::Julia { re, im } => radius.max(re.hypot(im)),
+        _ => radius,
+    };
     let (mut z, c) = match fractal {
         Fractal::Mandelbrot | Fractal::BurningShip | Fractal::Multibrot { .. } => {
             (Complex64::new(0.0, 0.0), Complex64::new(re, im))

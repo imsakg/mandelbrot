@@ -47,7 +47,7 @@ impl IterationSettings {
             ));
         }
         if let Fractal::Julia { re, im } = self.fractal {
-            if !re.is_finite() || !im.is_finite() {
+            if !re.is_finite() || !im.is_finite() || !re.hypot(im).powi(2).is_finite() {
                 return Err(Error("Julia constant must be finite".into()));
             }
         }
