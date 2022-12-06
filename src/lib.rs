@@ -123,11 +123,15 @@ fn orbit(re: f64, im: f64, limit: u32, radius: f64, fractal: Fractal) -> Escape 
             Fractal::Multibrot { power } if power != 2 => z.powu(power) + c,
             _ => z * z + c,
         };
-        if z.norm_sqr() > radius * radius {
+        if !z.re.is_finite() || !z.im.is_finite() || z.norm_sqr() > radius * radius {
             return Escape {
                 iterations,
                 escaped: true,
-                norm_sqr: z.norm_sqr(),
+                norm_sqr: if z.norm_sqr().is_nan() {
+                    f64::INFINITY
+                } else {
+                    z.norm_sqr()
+                },
                 distance: {
                     let r = z.norm();
                     let d = r * r.ln() / derivative.norm();
