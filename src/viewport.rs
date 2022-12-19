@@ -25,6 +25,23 @@ impl Viewport {
             return Err(Error("dimensions must be positive".into()));
         }
         let (dx, dy) = self.spans();
+        let monotone = |count: usize, min: f64, span: f64| {
+            if count < 2 {
+                return true;
+            }
+            let mut previous = min + span * (0.5 / count as f64);
+            for i in 1..count {
+                let current = min + span * ((i as f64 + 0.5) / count as f64);
+                if current <= previous {
+                    return false;
+                }
+                previous = current;
+            }
+            true
+        };
+        if !monotone(width, self.x_min, dx) || !monotone(height, self.y_min, dy) {
+            return Err(Error("adjacent pixel centers collapse at this zoom".into()));
+        }
         let sx = dx / width as f64;
         let sy = dy / height as f64;
         if sx <= 0.0
