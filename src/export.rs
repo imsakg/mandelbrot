@@ -22,6 +22,81 @@ impl ImageFormat {
 
 use std::io::{self, Write};
 
+struct OwnedTemporary(std::path::PathBuf);
+impl Drop for OwnedTemporary {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
+    }
+}
+
+fn write_atomic<F: FnOnce(&mut io::BufWriter<std::fs::File>) -> io::Result<()>>(
+    path: &std::path::Path,
+    encode: F,
+) -> io::Result<()> {
+    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let file_name = path
+        .file_name()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "output requires a filename"))?;
+    let parent = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let mut pending = None;
+    for _ in 0..16 {
+        let id = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let mut name = std::ffi::OsString::from(".");
+        name.push(file_name);
+        name.push(format!(".mandelbrot-{}-{id}.tmp", std::process::id()));
+        let temp = parent.join(name);
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp)
+        {
+            Ok(file) => {
+                pending = Some((OwnedTemporary(temp), file));
+                break;
+            }
+            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(e) => return Err(e),
+        }
+    }
+    let (temporary, file) = pending.ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "cannot reserve export temporary",
+        )
+    })?;
+    let mut writer = io::BufWriter::new(file);
+    encode(&mut writer)?;
+    writer.flush()?;
+    writer.get_ref().sync_all()?;
+    drop(writer);
+    std::fs::hard_link(&temporary.0, path)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod atomic_tests {
+    use super::*;
+    #[test]
+    fn encoder_failure_never_unlinks_a_concurrent_destination() {
+        let dir = std::env::temp_dir().join(format!("mandelbrot-fault-{}", std::process::id()));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("scene.png");
+        let result = write_atomic(&path, |writer| {
+            assert!(!path.exists());
+            writer.write_all(b"partial")?;
+            std::fs::write(&path, b"sentinel")?;
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                "injected encoder failure",
+            ))
+        });
+        assert!(result.is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), b"sentinel");
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
 fn write_chunk<W: Write>(writer: &mut W, name: &[u8; 4], data: &[u8]) -> io::Result<()> {
     let length = u32::try_from(data.len())
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "PNG chunk is too long"))?;
@@ -35,21 +110,10 @@ fn write_chunk<W: Write>(writer: &mut W, name: &[u8; 4], data: &[u8]) -> io::Res
 }
 
 impl Image {
-    /// Save without overwriting existing paths; remove partial output on encode/flush errors.
+    /// Encode into an owned sibling then atomically publish without clobbering existing paths.
+    /// Requires a filesystem supporting hard links; errors never unlink the destination.
     pub fn save(&self, path: &std::path::Path, format: ImageFormat) -> io::Result<()> {
-        let file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(path)?;
-        let mut writer = io::BufWriter::new(file);
-        let result = self
-            .write(&mut writer, format)
-            .and_then(|()| writer.flush());
-        drop(writer);
-        if result.is_err() {
-            let _ = std::fs::remove_file(path);
-        }
-        result
+        write_atomic(path, |writer| self.write(writer, format))
     }
     pub fn write<W: Write>(&self, writer: &mut W, format: ImageFormat) -> io::Result<()> {
         match format {
