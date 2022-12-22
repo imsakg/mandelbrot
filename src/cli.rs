@@ -1,5 +1,5 @@
 //! CLI parsing is pure and testable without launching a terminal.
-use crate::{Error, RenderSettings};
+use crate::{Error, RenderSettings, Viewport};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Options {
@@ -24,6 +24,18 @@ impl Options {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--help" | "-h" => out.help = true,
+                "--bounds" => {
+                    let b = numbers::<4>(&value(&mut args, &arg)?)?;
+                    out.render.viewport = Viewport::new(b[0], b[1], b[2], b[3])?;
+                }
+                "--zoom" => {
+                    let factor = number(&value(&mut args, &arg)?)?;
+                    out.render.viewport = out.render.viewport.zoom(factor)?;
+                }
+                "--pan" => {
+                    let p = numbers::<2>(&value(&mut args, &arg)?)?;
+                    out.render.viewport = out.render.viewport.pan(p[0], p[1])?;
+                }
                 "--width" => {
                     out.render.width = value(&mut args, &arg)?
                         .parse()
@@ -46,6 +58,19 @@ impl Options {
         Ok(out)
     }
 }
+pub(crate) fn number(s: &str) -> Result<f64, Error> {
+    s.parse::<f64>()
+        .ok()
+        .filter(|v| v.is_finite())
+        .ok_or_else(|| Error(format!("expected a finite number: {s}")))
+}
+fn numbers<const N: usize>(s: &str) -> Result<[f64; N], Error> {
+    let values: Vec<f64> = s.split(',').map(number).collect::<Result<_, _>>()?;
+    values
+        .try_into()
+        .map_err(|_| Error(format!("expected {N} comma-separated numbers")))
+}
+
 fn value(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<String, Error> {
     args.next()
         .ok_or_else(|| Error(format!("missing value for {flag}")))
