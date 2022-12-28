@@ -1,5 +1,5 @@
 //! CLI parsing is pure and testable without launching a terminal.
-use crate::{Error, RenderSettings, Viewport};
+use crate::{Error, Fractal, RenderSettings, Viewport};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Options {
@@ -24,6 +24,30 @@ impl Options {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--help" | "-h" => out.help = true,
+                "--variant" => out.render.iterations.fractal = match value(&mut args, &arg)?
+                    .as_str()
+                {
+                    "mandelbrot" => Fractal::Mandelbrot,
+                    "ship" => Fractal::BurningShip,
+                    _ => return Err(Error(
+                        "variant must be mandelbrot or ship; use --julia or --power for other sets"
+                            .into(),
+                    )),
+                },
+                "--julia" => {
+                    let c = numbers::<2>(&value(&mut args, &arg)?)?;
+                    out.render.iterations.fractal = Fractal::Julia { re: c[0], im: c[1] };
+                }
+                "--power" => {
+                    out.render.iterations.fractal = Fractal::Multibrot {
+                        power: value(&mut args, &arg)?
+                            .parse()
+                            .map_err(|_| Error("power must be an integer".into()))?,
+                    }
+                }
+                "--radius" => {
+                    out.render.iterations.escape_radius = number(&value(&mut args, &arg)?)?
+                }
                 "--bounds" => {
                     let b = numbers::<4>(&value(&mut args, &arg)?)?;
                     out.render.viewport = Viewport::new(b[0], b[1], b[2], b[3])?;
