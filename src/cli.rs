@@ -1,10 +1,12 @@
 //! CLI parsing is pure and testable without launching a terminal.
-use crate::{Error, Fractal, RenderSettings, Viewport};
+use crate::{ColorSettings, Error, Fractal, Palette, RenderSettings, Viewport};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Options {
     pub render: RenderSettings,
     pub help: bool,
+    pub colors: ColorSettings,
+    pub samples: u8,
 }
 impl Options {
     pub fn parse<I, S>(args: I) -> Result<Self, Error>
@@ -19,11 +21,24 @@ impl Options {
                 ..Default::default()
             },
             help: false,
+            colors: ColorSettings::default(),
+            samples: 1,
         };
         let mut args = args.into_iter().map(Into::into);
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--help" | "-h" => out.help = true,
+                "--palette" => out.colors.palette = Palette::parse(&value(&mut args, &arg)?)?,
+                "--cycles" => out.colors.cycles = number(&value(&mut args, &arg)?)?,
+                "--shift" => out.colors.shift = number(&value(&mut args, &arg)?)?,
+                "--gamma" => out.colors.gamma = number(&value(&mut args, &arg)?)?,
+                "--histogram" => out.colors.histogram = true,
+                "--no-smooth" => out.colors.smooth = false,
+                "--samples" => {
+                    out.samples = value(&mut args, &arg)?
+                        .parse()
+                        .map_err(|_| Error("samples must be an integer".into()))?
+                }
                 "--variant" => out.render.iterations.fractal = match value(&mut args, &arg)?
                     .as_str()
                 {
@@ -79,6 +94,10 @@ impl Options {
             }
         }
         out.render.validate()?;
+        out.colors.validate()?;
+        if !(1..=4).contains(&out.samples) {
+            return Err(Error("samples must be in 1..=4".into()));
+        }
         Ok(out)
     }
 }
