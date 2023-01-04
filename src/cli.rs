@@ -7,6 +7,7 @@ pub struct Options {
     pub help: bool,
     pub colors: ColorSettings,
     pub samples: u8,
+    pub output: Option<std::path::PathBuf>,
 }
 impl Options {
     pub fn parse<I, S>(args: I) -> Result<Self, Error>
@@ -23,11 +24,13 @@ impl Options {
             help: false,
             colors: ColorSettings::default(),
             samples: 1,
+            output: None,
         };
         let mut args = args.into_iter().map(Into::into);
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--help" | "-h" => out.help = true,
+                "--output" | "-o" => out.output = Some(value(&mut args, &arg)?.into()),
                 "--palette" => out.colors.palette = Palette::parse(&value(&mut args, &arg)?)?,
                 "--cycles" => out.colors.cycles = number(&value(&mut args, &arg)?)?,
                 "--shift" => out.colors.shift = number(&value(&mut args, &arg)?)?,
@@ -92,6 +95,9 @@ impl Options {
                 }
                 _ => return Err(Error(format!("unknown option: {arg}; use --help"))),
             }
+        }
+        if let Some(path) = &out.output {
+            crate::ImageFormat::from_path(path)?;
         }
         out.render.validate()?;
         out.colors.validate()?;
