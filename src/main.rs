@@ -1,4 +1,4 @@
-use mandelbrot::{cli::Options, render, render_rgb, Image, ImageFormat};
+use mandelbrot::{cli::Options, render_parallel, render_rgb_parallel, Image, ImageFormat};
 use std::io::{self, Write};
 
 const HELP: &str = "mandelbrot — terminal explorer and RGB image renderer\n\n\
@@ -15,6 +15,7 @@ Usage: mandelbrot [OPTIONS]\n\
   --gamma N --histogram   Tone correction / histogram equalization\n\
   --no-smooth --samples N Integer bands / n×n supersampling (1..=4)\n\
   --output PATH, -o PATH  Save .png or .ppm; never overwrite existing files\n\
+  --threads N            Scoped CPU workers (1..=64)\n\
   --help, -h              Show this help\n";
 
 fn run() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,13 +29,20 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     if let Some(path) = &options.output {
-        let pixels = render_rgb(&options.render, &options.colors, options.samples)?;
+        let pixels = render_rgb_parallel(
+            &options.render,
+            &options.colors,
+            options.samples,
+            options.threads,
+        )?;
         let image = Image::new(options.render.width, options.render.height, pixels)?;
         image.save(path, ImageFormat::from_path(path)?)?;
     } else {
-        io::stdout()
-            .lock()
-            .write_all(render(&options.render)?.ascii().as_bytes())?;
+        io::stdout().lock().write_all(
+            render_parallel(&options.render, options.threads)?
+                .ascii()
+                .as_bytes(),
+        )?;
     }
     Ok(())
 }

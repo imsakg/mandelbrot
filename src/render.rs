@@ -8,6 +8,14 @@ pub fn render_rgb(
     colors: &crate::ColorSettings,
     samples: u8,
 ) -> Result<Vec<crate::Rgb>, Error> {
+    render_rgb_parallel(settings, colors, samples, 1)
+}
+pub fn render_rgb_parallel(
+    settings: &RenderSettings,
+    colors: &crate::ColorSettings,
+    samples: u8,
+    workers: usize,
+) -> Result<Vec<crate::Rgb>, Error> {
     settings.validate()?;
     colors.validate()?;
     if !(1..=4).contains(&samples) {
@@ -23,7 +31,7 @@ pub fn render_rgb(
         .height
         .checked_mul(n)
         .ok_or_else(|| Error("supersampling height overflow".into()))?;
-    let pixels = render(&high)?.colorize(colors)?;
+    let pixels = render_parallel(&high, workers)?.colorize(colors)?;
     let mut result = Vec::with_capacity(settings.width * settings.height);
     let count = (n * n) as u32;
     for y in 0..settings.height {

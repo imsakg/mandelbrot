@@ -7,6 +7,7 @@ pub struct Options {
     pub help: bool,
     pub colors: ColorSettings,
     pub samples: u8,
+    pub threads: usize,
     pub output: Option<std::path::PathBuf>,
 }
 impl Options {
@@ -24,12 +25,18 @@ impl Options {
             help: false,
             colors: ColorSettings::default(),
             samples: 1,
+            threads: 1,
             output: None,
         };
         let mut args = args.into_iter().map(Into::into);
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--help" | "-h" => out.help = true,
+                "--threads" => {
+                    out.threads = value(&mut args, &arg)?
+                        .parse()
+                        .map_err(|_| Error("threads must be an integer".into()))?
+                }
                 "--output" | "-o" => out.output = Some(value(&mut args, &arg)?.into()),
                 "--palette" => out.colors.palette = Palette::parse(&value(&mut args, &arg)?)?,
                 "--cycles" => out.colors.cycles = number(&value(&mut args, &arg)?)?,
@@ -101,6 +108,9 @@ impl Options {
         }
         out.render.validate()?;
         out.colors.validate()?;
+        if !(1..=64).contains(&out.threads) {
+            return Err(Error("threads must be in 1..=64".into()));
+        }
         if !(1..=4).contains(&out.samples) {
             return Err(Error("samples must be in 1..=4".into()));
         }
