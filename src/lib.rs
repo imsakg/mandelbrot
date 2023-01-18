@@ -3,6 +3,7 @@
 use num::complex::Complex64;
 mod checksum;
 pub mod cli;
+pub mod controls;
 mod export;
 pub use export::ImageFormat;
 mod image;
