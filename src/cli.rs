@@ -5,6 +5,7 @@ use crate::{ColorSettings, Error, Fractal, Palette, RenderSettings, Viewport};
 pub struct Options {
     pub render: RenderSettings,
     pub help: bool,
+    pub interactive: bool,
     pub colors: ColorSettings,
     pub samples: u8,
     pub threads: usize,
@@ -23,6 +24,7 @@ impl Options {
                 ..Default::default()
             },
             help: false,
+            interactive: false,
             colors: ColorSettings::default(),
             samples: 1,
             threads: 1,
@@ -32,6 +34,7 @@ impl Options {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--help" | "-h" => out.help = true,
+                "--interactive" => out.interactive = true,
                 "--threads" => {
                     out.threads = value(&mut args, &arg)?
                         .parse()
@@ -102,6 +105,11 @@ impl Options {
                 }
                 _ => return Err(Error(format!("unknown option: {arg}; use --help"))),
             }
+        }
+        if out.interactive && out.output.is_some() {
+            return Err(Error(
+                "--interactive cannot be combined with --output".into(),
+            ));
         }
         if let Some(path) = &out.output {
             crate::ImageFormat::from_path(path)?;

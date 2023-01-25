@@ -1,5 +1,36 @@
 use mandelbrot::{cli::Options, render_parallel, render_rgb_parallel, Image, ImageFormat};
-use std::io::{self, Write};
+use std::io::{self, IsTerminal, Write};
+
+struct TerminalSession;
+impl Drop for TerminalSession {
+    fn drop(&mut self) {
+        let _ = io::stdout().write_all(b"\x1b[?25h\x1b[?1049l");
+    }
+}
+fn interactive(mut options: Options) -> Result<(), Box<dyn std::error::Error>> {
+    if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
+        return Err("interactive mode requires an input and output terminal".into());
+    }
+    io::stdout().write_all(b"\x1b[?1049h\x1b[?25l")?;
+    let _session = TerminalSession;
+    let input = getch::Getch::new();
+    loop {
+        let frame = render_parallel(&options.render, options.threads)?;
+        {
+            let mut out = io::stdout().lock();
+            write!(out,"\x1b[H{}\x1b[Kiterations={}  {:?}\n\x1b[Kwasd pan | k/j zoom | [] detail | r reset | q quit\n",frame.ascii(),options.render.iterations.max_iterations,options.render.iterations.fractal)?;
+            out.flush()?;
+        }
+        match mandelbrot::controls::apply(&mut options.render, input.getch()? as char) {
+            Ok(mandelbrot::controls::Action::Quit) => break,
+            Ok(_) => {}
+            Err(error) => {
+                eprintln!("{error}");
+            }
+        }
+    }
+    Ok(())
+}
 
 const HELP: &str = "mandelbrot — terminal explorer and RGB image renderer\n\n\
 Usage: mandelbrot [OPTIONS]\n\
@@ -15,6 +46,7 @@ Usage: mandelbrot [OPTIONS]\n\
   --gamma N --histogram   Tone correction / histogram equalization\n\
   --no-smooth --samples N Integer bands / n×n supersampling (1..=4)\n\
   --output PATH, -o PATH  Save .png or .ppm; never overwrite existing files\n\
+  --interactive          Keyboard explorer (requires a TTY)\n\
   --threads N            Scoped CPU workers (1..=64)\n\
   --help, -h              Show this help\n";
 
@@ -27,6 +59,9 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     if options.help {
         io::stdout().lock().write_all(HELP.as_bytes())?;
         return Ok(());
+    }
+    if options.interactive {
+        return interactive(options);
     }
     if let Some(path) = &options.output {
         let pixels = render_rgb_parallel(
