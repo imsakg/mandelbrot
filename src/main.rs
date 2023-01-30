@@ -7,21 +7,23 @@ impl Drop for TerminalSession {
         let _ = io::stdout().write_all(b"\x1b[?25h\x1b[?1049l");
     }
 }
-fn interactive(mut options: Options) -> Result<(), Box<dyn std::error::Error>> {
+fn interactive(options: Options) -> Result<(), Box<dyn std::error::Error>> {
     if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
         return Err("interactive mode requires an input and output terminal".into());
     }
     io::stdout().write_all(b"\x1b[?1049h\x1b[?25l")?;
     let _session = TerminalSession;
     let input = getch::Getch::new();
+    let mut explorer = mandelbrot::Explorer::new(options)?;
     loop {
+        let options = explorer.options();
         let frame = render_parallel(&options.render, options.threads)?;
         {
             let mut out = io::stdout().lock();
-            write!(out,"\x1b[H{}\x1b[Kiterations={}  {:?}\n\x1b[Kwasd pan | k/j zoom | [] detail | r reset | q quit\n",frame.ascii(),options.render.iterations.max_iterations,options.render.iterations.fractal)?;
+            write!(out,"\x1b[H{}\x1b[Kiterations={}  {:?}\n\x1b[Kwasd pan | k/j zoom | [] detail | r reset | u/y undo/redo | p palette | q quit\n",frame.ascii(),options.render.iterations.max_iterations,options.render.iterations.fractal)?;
             out.flush()?;
         }
-        match mandelbrot::controls::apply(&mut options.render, input.getch()? as char) {
+        match explorer.key(input.getch()? as char) {
             Ok(mandelbrot::controls::Action::Quit) => break,
             Ok(_) => {}
             Err(error) => {
