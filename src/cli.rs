@@ -34,6 +34,7 @@ impl Options {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--help" | "-h" => out.help = true,
+                "--preset" => crate::presets::apply(&value(&mut args, &arg)?, &mut out.render)?,
                 "--interactive" => out.interactive = true,
                 "--threads" => {
                     out.threads = value(&mut args, &arg)?

@@ -6,6 +6,7 @@ pub mod cli;
 pub mod controls;
 mod explorer;
 mod export;
+pub mod presets;
 pub use explorer::Explorer;
 pub use export::ImageFormat;
 mod image;

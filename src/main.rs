@@ -40,6 +40,7 @@ Usage: mandelbrot [OPTIONS]\n\
   --iterations N          Updates per orbit (1..=10000000)\n\
   --bounds X0,X1,Y0,Y1     Ordered complex-plane rectangle\n\
   --zoom FACTOR --pan X,Y  Ordered viewport transforms\n\
+  --preset NAME          overview, seahorse, elephant, julia, ship\n\
   --julia RE,IM           Julia set with a fixed complex constant\n\
   --variant NAME          mandelbrot or ship\n\
   --power N --radius R    Multibrot power (2..=8), escape radius (>=2)\n\
