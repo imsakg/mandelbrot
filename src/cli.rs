@@ -12,6 +12,19 @@ pub struct Options {
     pub output: Option<std::path::PathBuf>,
 }
 impl Options {
+    /// A whitespace-tokenized portable recipe; intentionally excludes local output paths and TTY state.
+    pub fn recipe(&self) -> String {
+        let [a, b, c, d] = self.render.viewport.bounds();
+        let variant = match self.render.iterations.fractal {
+            Fractal::Mandelbrot => "--variant mandelbrot".to_string(),
+            Fractal::BurningShip => "--variant ship".to_string(),
+            Fractal::Julia { re, im } => format!("--julia {re:.17e},{im:.17e}"),
+            Fractal::Multibrot { power } => format!("--power {power}"),
+        };
+        format!("--width {} --height {} --bounds {a:.17e},{b:.17e},{c:.17e},{d:.17e} {variant} --iterations {} --radius {:.17e} --palette {} --cycles {:.17e} --shift {:.17e} --gamma {:.17e} --samples {} --threads {}{}{}",
+            self.render.width,self.render.height,self.render.iterations.max_iterations,self.render.iterations.escape_radius,self.colors.palette.name(),self.colors.cycles,self.colors.shift,self.colors.gamma,self.samples,self.threads,
+            if self.colors.histogram { " --histogram" } else { "" },if self.colors.smooth { "" } else { " --no-smooth" })
+    }
     pub fn parse<I, S>(args: I) -> Result<Self, Error>
     where
         I: IntoIterator<Item = S>,
