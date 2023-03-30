@@ -1,4 +1,13 @@
 //! Pure escape-time fractal kernels, independent of terminal I/O.
+//!
+//! ```
+//! use mandelbrot::{render, RenderSettings};
+//! let settings = RenderSettings { width: 16, height: 12, ..Default::default() };
+//! let frame = render(&settings)?;
+//! assert_eq!(frame.samples().len(), 192);
+//! assert_eq!(frame.ascii().lines().count(), 12);
+//! # Ok::<(), mandelbrot::Error>(())
+//! ```
 
 use num::complex::Complex64;
 mod checksum;
