@@ -1,0 +1,25 @@
+name: Rust quality
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --check
+      - run: cargo clippy --locked --all-targets --all-features -- -D warnings
+      - run: cargo test --locked --all-targets --all-features
+      - run: cargo test --locked --doc
+      - run: cargo build --locked --release
+      - run: python3 -m unittest discover -s tests -p 'test_verify_png.py'
+      - run: cargo run --locked --release -- --width 128 --height 171 --threads 2 --output smoke.png
+      - run: python3 scripts/verify_png.py smoke.png
