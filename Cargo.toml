@@ -2,6 +2,11 @@
 name = "mandelbrot"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.88"
+description = "A tested terminal fractal explorer and RGB image rendering library"
+repository = "https://github.com/imsakg/mandelbrot"
+keywords = ["mandelbrot", "julia", "fractal", "terminal", "png"]
+categories = ["command-line-utilities", "graphics", "mathematics"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

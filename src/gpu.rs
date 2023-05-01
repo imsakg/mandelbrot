@@ -63,7 +63,7 @@ impl GpuParams {
         })
     }
     pub fn workgroups(self) -> (u32, u32) {
-        ((self.width + 7) / 8, (self.height + 7) / 8)
+        (self.width.div_ceil(8), self.height.div_ceil(8))
     }
     /// Twelve little-endian words: bounds, Julia constant, dimensions, iteration/variant/power, radius².
     pub fn to_le_bytes(self) -> [u8; 48] {
@@ -82,7 +82,7 @@ impl GpuParams {
             self.radius_sqr.to_bits(),
         ];
         let mut bytes = [0u8; 48];
-        for (chunk, word) in bytes.chunks_exact_mut(4).zip(words) {
+        for (chunk, word) in bytes.as_chunks_mut::<4>().0.iter_mut().zip(words) {
             chunk.copy_from_slice(&word.to_le_bytes());
         }
         bytes

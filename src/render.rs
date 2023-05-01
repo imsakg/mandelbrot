@@ -139,7 +139,7 @@ pub fn render_parallel(settings: &RenderSettings, workers: usize) -> Result<Fram
         return render(settings);
     }
     let workers = workers.min(settings.height);
-    let rows = settings.height / workers + usize::from(settings.height % workers != 0);
+    let rows = settings.height.div_ceil(workers);
     let mut samples = Vec::new();
     samples
         .try_reserve_exact(area)

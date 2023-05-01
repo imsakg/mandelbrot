@@ -73,30 +73,6 @@ fn write_atomic<F: FnOnce(&mut io::BufWriter<std::fs::File>) -> io::Result<()>>(
     Ok(())
 }
 
-#[cfg(test)]
-mod atomic_tests {
-    use super::*;
-    #[test]
-    fn encoder_failure_never_unlinks_a_concurrent_destination() {
-        let dir = std::env::temp_dir().join(format!("mandelbrot-fault-{}", std::process::id()));
-        std::fs::create_dir(&dir).unwrap();
-        let path = dir.join("scene.png");
-        let result = write_atomic(&path, |writer| {
-            assert!(!path.exists());
-            writer.write_all(b"partial")?;
-            std::fs::write(&path, b"sentinel")?;
-            Err(io::Error::new(
-                io::ErrorKind::Other,
-                "injected encoder failure",
-            ))
-        });
-        assert!(result.is_err());
-        assert_eq!(std::fs::read(&path).unwrap(), b"sentinel");
-        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
-        std::fs::remove_dir_all(dir).unwrap();
-    }
-}
-
 fn write_chunk<W: Write>(writer: &mut W, name: &[u8; 4], data: &[u8]) -> io::Result<()> {
     let length = u32::try_from(data.len())
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "PNG chunk is too long"))?;
@@ -158,5 +134,26 @@ impl Image {
             writer.write_all(&pixel.bytes())?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod atomic_tests {
+    use super::*;
+    #[test]
+    fn encoder_failure_never_unlinks_a_concurrent_destination() {
+        let dir = std::env::temp_dir().join(format!("mandelbrot-fault-{}", std::process::id()));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("scene.png");
+        let result = write_atomic(&path, |writer| {
+            assert!(!path.exists());
+            writer.write_all(b"partial")?;
+            std::fs::write(&path, b"sentinel")?;
+            Err(io::Error::other("injected encoder failure"))
+        });
+        assert!(result.is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), b"sentinel");
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }

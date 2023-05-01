@@ -2,8 +2,10 @@ use mandelbrot::{iterate, IterationSettings};
 
 #[test]
 fn settings_reject_zero_iterations_and_nonfinite_coordinates() {
-    let mut settings = IterationSettings::default();
-    settings.max_iterations = 0;
+    let settings = IterationSettings {
+        max_iterations: 0,
+        ..Default::default()
+    };
     assert!(iterate(0.0, 0.0, &settings).is_err());
     assert!(iterate(f64::NAN, 0.0, &IterationSettings::default()).is_err());
     assert!(iterate(0.0, f64::INFINITY, &IterationSettings::default()).is_err());

@@ -6,7 +6,7 @@ A terminal fractal explorer and reusable Rust rendering library. The original de
 
 ## Run
 
-Install a current stable Rust toolchain, then:
+Install Rust 1.88 or a newer stable toolchain, then:
 
 ```sh
 cargo run --release -- --width 80 --height 24
