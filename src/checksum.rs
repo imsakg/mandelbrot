@@ -1,10 +1,23 @@
+const fn crc_table() -> [u32; 256] {
+    let mut table = [0u32; 256];
+    let mut i = 0;
+    while i < 256 {
+        let mut c = i as u32;
+        let mut bit = 0;
+        while bit < 8 {
+            c = (c >> 1) ^ (0xedb8_8320u32.wrapping_mul(c & 1));
+            bit += 1;
+        }
+        table[i] = c;
+        i += 1;
+    }
+    table
+}
+const CRC_TABLE: [u32; 256] = crc_table();
 pub(crate) fn crc32(bytes: &[u8]) -> u32 {
     let mut crc = 0xffff_ffffu32;
     for &byte in bytes {
-        crc ^= byte as u32;
-        for _ in 0..8 {
-            crc = (crc >> 1) ^ (0xedb8_8320u32.wrapping_mul(crc & 1));
-        }
+        crc = (crc >> 8) ^ CRC_TABLE[((crc as u8) ^ byte) as usize];
     }
     !crc
 }
