@@ -20,7 +20,7 @@ fn interactive(options: Options) -> Result<(), Box<dyn std::error::Error>> {
         let frame = render_parallel(&options.render, options.threads)?;
         {
             let mut out = io::stdout().lock();
-            write!(out,"\x1b[H{}\x1b[Kiterations={}  {:?}\n\x1b[Kwasd pan | k/j zoom | [] detail | r reset | u/y undo/redo | p palette | q quit\n",frame.ascii(),options.render.iterations.max_iterations,options.render.iterations.fractal)?;
+            write!(out,"\x1b[H{}\x1b[Kiterations={}  {:?}\n\x1b[Kwasd pan | k/j zoom | [] detail | r reset | u/y undo/redo | p palette | q quit\n",if options.color { frame.ansi(&options.colors)? } else { frame.ascii() },options.render.iterations.max_iterations,options.render.iterations.fractal)?;
             out.flush()?;
         }
         match explorer.key(input.getch()? as char) {
@@ -49,6 +49,7 @@ Usage: mandelbrot [OPTIONS]\n\
   --gamma N --histogram   Tone correction / histogram equalization\n\
   --no-smooth --samples N Integer bands / n×n supersampling (1..=4)\n\
   --output PATH, -o PATH  Save .png or .ppm; never overwrite existing files\n\
+  --color                Opt-in 24-bit terminal color cells\n\
   --interactive          Keyboard explorer (requires a TTY)\n\
   --threads N            Scoped CPU workers (1..=64)\n\
   --help, -h              Show this help\n";
@@ -77,9 +78,15 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         image.save(path, ImageFormat::from_path(path)?)?;
     } else {
         io::stdout().lock().write_all(
-            render_parallel(&options.render, options.threads)?
-                .ascii()
-                .as_bytes(),
+            {
+                let frame = render_parallel(&options.render, options.threads)?;
+                if options.color {
+                    frame.ansi(&options.colors)?
+                } else {
+                    frame.ascii()
+                }
+            }
+            .as_bytes(),
         )?;
     }
     Ok(())

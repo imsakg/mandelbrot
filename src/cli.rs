@@ -6,6 +6,7 @@ pub struct Options {
     pub render: RenderSettings,
     pub help: bool,
     pub interactive: bool,
+    pub color: bool,
     pub colors: ColorSettings,
     pub samples: u8,
     pub threads: usize,
@@ -38,6 +39,7 @@ impl Options {
             },
             help: false,
             interactive: false,
+            color: false,
             colors: ColorSettings::default(),
             samples: 1,
             threads: 1,
@@ -49,6 +51,7 @@ impl Options {
                 "--help" | "-h" => out.help = true,
                 "--preset" => crate::presets::apply(&value(&mut args, &arg)?, &mut out.render)?,
                 "--interactive" => out.interactive = true,
+                "--color" => out.color = true,
                 "--threads" => {
                     out.threads = value(&mut args, &arg)?
                         .parse()

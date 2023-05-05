@@ -41,6 +41,24 @@ impl ColorSettings {
     }
 }
 impl Frame {
+    /// Truecolor background cells. Explicit opt-in; each row restores terminal attributes.
+    pub fn ansi(&self, colors: &ColorSettings) -> Result<String, Error> {
+        use std::fmt::Write;
+        let pixels = self.colorize(colors)?;
+        let mut text = String::new();
+        for row in pixels.chunks(self.width()) {
+            let mut current = None;
+            for &rgb in row {
+                if current != Some(rgb) {
+                    let _ = write!(&mut text, "\x1b[48;2;{};{};{}m", rgb.0, rgb.1, rgb.2);
+                    current = Some(rgb);
+                }
+                text.push(' ');
+            }
+            text.push_str("\x1b[0m\n");
+        }
+        Ok(text)
+    }
     pub fn colorize(&self, colors: &ColorSettings) -> Result<Vec<Rgb>, Error> {
         colors.validate()?;
         let limit = self.settings().iterations.max_iterations as f64;

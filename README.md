@@ -14,9 +14,9 @@ cargo run --release -- --interactive --width 80 --height 22
 cargo run --release -- --help
 ```
 
-No flag means one ASCII frame and exit, so pipes and automated runs never wait for keyboard input. Interactive mode requires both stdin and stdout to be terminals. It uses a temporary alternate screen and restores the cursor on normal exit or returned errors.
+Add `--color` for 24-bit terminal colors; plain ASCII never emits color escapes. No flag means one ASCII frame and exit, so pipes and automated runs never wait for keyboard input. Interactive mode requires both stdin and stdout to be terminals. It uses a temporary alternate screen and restores the cursor on normal exit or returned errors.
 
-Interactive keys: `wasd` pan by 10% of the visible span, `k`/`+` zoom in, `j`/`-` zoom out, `[`/`]` halve/double the iteration budget, `r` reset bounds, `u` undo, `y` redo, `p` select the export palette, `q`/Escape quit. Unknown keys do nothing. Undo tracks viewports, not every color/iteration setting.
+Interactive keys: `wasd` pan by 10% of the visible span, `k`/`+` zoom in, `j`/`-` zoom out, `[`/`]` halve/double the iteration budget, `r` reset bounds, `u` undo, `y` redo, `p` select the palette (visible with `--color`), `q`/Escape quit. Unknown keys do nothing. Undo tracks viewports, not every color/iteration setting.
 
 ## Export
 
