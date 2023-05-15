@@ -49,6 +49,7 @@ Usage: mandelbrot [OPTIONS]\n\
   --gamma N --histogram   Tone correction / histogram equalization\n\
   --no-smooth --samples N Integer bands / n×n supersampling (1..=4)\n\
   --output PATH, -o PATH  Save .png or .ppm; never overwrite existing files\n\
+  --stats                Batch elapsed time and settings on stderr\n\
   --color                Opt-in 24-bit terminal color cells\n\
   --interactive          Keyboard explorer (requires a TTY)\n\
   --threads N            Scoped CPU workers (1..=64)\n\
@@ -64,6 +65,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         io::stdout().lock().write_all(HELP.as_bytes())?;
         return Ok(());
     }
+    let started = std::time::Instant::now();
     if options.interactive {
         return interactive(options);
     }
@@ -88,6 +90,17 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             }
             .as_bytes(),
         )?;
+    }
+    if options.stats {
+        eprintln!(
+            "elapsed_seconds={:.6} size={}x{} iterations={} samples_per_axis={} workers={}",
+            started.elapsed().as_secs_f64(),
+            options.render.width,
+            options.render.height,
+            options.render.iterations.max_iterations,
+            options.samples,
+            options.threads
+        );
     }
     Ok(())
 }
