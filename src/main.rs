@@ -1,5 +1,5 @@
 use mandelbrot::{cli::Options, render_parallel, render_rgb_parallel, Image, ImageFormat};
-use std::io::{self, IsTerminal, Write};
+use std::io::{self, IsTerminal, Read, Write};
 
 struct TerminalSession;
 impl Drop for TerminalSession {
@@ -49,6 +49,8 @@ Usage: mandelbrot [OPTIONS]\n\
   --gamma N --histogram   Tone correction / histogram equalization\n\
   --no-smooth --samples N Integer bands / n×n supersampling (1..=4)\n\
   --output PATH, -o PATH  Save .png or .ppm; never overwrite existing files\n\
+  --print-recipe         Print a portable render recipe, then exit\n\
+  --recipe PATH          Load whitespace-separated render settings (no shell)\n\
   --stats                Batch elapsed time and settings on stderr\n\
   --color                Opt-in 24-bit terminal color cells\n\
   --interactive          Keyboard explorer (requires a TTY)\n\
@@ -60,9 +62,37 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         .skip(1)
         .map(|v| v.into_string().map_err(|_| "arguments must be UTF-8"))
         .collect::<Result<Vec<_>, _>>()?;
-    let options = Options::parse(args)?;
+    let mut expanded = Vec::new();
+    let mut input = args.into_iter();
+    while let Some(arg) = input.next() {
+        if arg == "--recipe" {
+            let path = input.next().ok_or("missing path for --recipe")?;
+            let mut text = String::new();
+            std::fs::File::open(path)?
+                .take(65_537)
+                .read_to_string(&mut text)?;
+            if text.len() > 65_536 {
+                return Err("recipe exceeds 64 KiB".into());
+            }
+            let tokens: Vec<String> = text.split_whitespace().map(str::to_owned).collect();
+            if tokens
+                .iter()
+                .any(|v| ["--recipe", "--output", "-o", "--interactive"].contains(&v.as_str()))
+            {
+                return Err("recipe files may not request file I/O or interactive mode".into());
+            }
+            expanded.extend(tokens);
+        } else {
+            expanded.push(arg);
+        }
+    }
+    let options = Options::parse(expanded)?;
     if options.help {
         io::stdout().lock().write_all(HELP.as_bytes())?;
+        return Ok(());
+    }
+    if options.print_recipe {
+        writeln!(io::stdout().lock(), "{}", options.recipe())?;
         return Ok(());
     }
     let started = std::time::Instant::now();

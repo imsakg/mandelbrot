@@ -8,6 +8,7 @@ pub struct Options {
     pub interactive: bool,
     pub color: bool,
     pub stats: bool,
+    pub print_recipe: bool,
     pub colors: ColorSettings,
     pub samples: u8,
     pub threads: usize,
@@ -42,6 +43,7 @@ impl Options {
             interactive: false,
             color: false,
             stats: false,
+            print_recipe: false,
             colors: ColorSettings::default(),
             samples: 1,
             threads: 1,
@@ -55,6 +57,7 @@ impl Options {
                 "--interactive" => out.interactive = true,
                 "--color" => out.color = true,
                 "--stats" => out.stats = true,
+                "--print-recipe" => out.print_recipe = true,
                 "--threads" => {
                     out.threads = value(&mut args, &arg)?
                         .parse()
