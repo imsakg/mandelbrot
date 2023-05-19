@@ -172,6 +172,19 @@ impl Palette {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Rgb(pub u8, pub u8, pub u8);
 impl Rgb {
+    pub fn from_hex(value: &str) -> Result<Self, Error> {
+        let s = value.strip_prefix('#').unwrap_or(value);
+        if s.len() != 6 || !s.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Err(Error(
+                "RGB color must contain exactly six ASCII hexadecimal digits".into(),
+            ));
+        }
+        let rgb = u32::from_str_radix(s, 16).map_err(|_| Error("invalid RGB color".into()))?;
+        Ok(Self((rgb >> 16) as u8, (rgb >> 8) as u8, rgb as u8))
+    }
+    pub fn hex(self) -> String {
+        format!("#{:02x}{:02x}{:02x}", self.0, self.1, self.2)
+    }
     pub fn bytes(self) -> [u8; 3] {
         [self.0, self.1, self.2]
     }

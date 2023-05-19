@@ -24,8 +24,8 @@ impl Options {
             Fractal::Julia { re, im } => format!("--julia {re:.17e},{im:.17e}"),
             Fractal::Multibrot { power } => format!("--power {power}"),
         };
-        format!("--width {} --height {} --bounds {a:.17e},{b:.17e},{c:.17e},{d:.17e} {variant} --iterations {} --radius {:.17e} --palette {} --cycles {:.17e} --shift {:.17e} --gamma {:.17e} --samples {} --threads {}{}{}",
-            self.render.width,self.render.height,self.render.iterations.max_iterations,self.render.iterations.escape_radius,self.colors.palette.name(),self.colors.cycles,self.colors.shift,self.colors.gamma,self.samples,self.threads,
+        format!("--width {} --height {} --bounds {a:.17e},{b:.17e},{c:.17e},{d:.17e} {variant} --iterations {} --radius {:.17e} --palette {} --cycles {:.17e} --shift {:.17e} --gamma {:.17e} --interior {} --samples {} --threads {}{}{}",
+            self.render.width,self.render.height,self.render.iterations.max_iterations,self.render.iterations.escape_radius,self.colors.palette.name(),self.colors.cycles,self.colors.shift,self.colors.gamma,self.colors.interior.hex(),self.samples,self.threads,
             if self.colors.histogram { " --histogram" } else { "" },if self.colors.smooth { "" } else { " --no-smooth" })
     }
     pub fn parse<I, S>(args: I) -> Result<Self, Error>
@@ -64,6 +64,9 @@ impl Options {
                         .map_err(|_| Error("threads must be an integer".into()))?
                 }
                 "--output" | "-o" => out.output = Some(value(&mut args, &arg)?.into()),
+                "--interior" => {
+                    out.colors.interior = crate::Rgb::from_hex(&value(&mut args, &arg)?)?
+                }
                 "--palette" => out.colors.palette = Palette::parse(&value(&mut args, &arg)?)?,
                 "--cycles" => out.colors.cycles = number(&value(&mut args, &arg)?)?,
                 "--shift" => out.colors.shift = number(&value(&mut args, &arg)?)?,

@@ -45,6 +45,7 @@ Usage: mandelbrot [OPTIONS]\n\
   --variant NAME          mandelbrot or ship\n\
   --power N --radius R    Multibrot power (2..=8), escape radius (>=2)\n\
   --palette NAME          ocean, fire, gray, viridis\n\
+  --interior HEX         Six-digit RGB for bounded samples\n\
   --cycles N --shift N    Cyclic palette frequency and offset\n\
   --gamma N --histogram   Tone correction / histogram equalization\n\
   --no-smooth --samples N Integer bands / n×n supersampling (1..=4)\n\
