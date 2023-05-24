@@ -16,11 +16,14 @@ impl GpuParams {
         s.validate()?;
         let b = s.viewport.bounds();
         let bounds = b.map(|v| v as f32);
-        let (dx, dy) = s.viewport.spans();
-        let monotone = |min: f32, span: f64, count: usize| {
+        let (dx, dy) = (bounds[1] - bounds[0], bounds[3] - bounds[2]);
+        let monotone = |min: f32, span: f32, count: usize| {
+            if !span.is_finite() || span <= 0.0 {
+                return false;
+            }
             let mut last = min;
             for i in 0..count {
-                let now = (min as f64 + span * ((i as f64 + 0.5) / count as f64)) as f32;
+                let now = min + span * ((i as f32 + 0.5) / count as f32);
                 if i > 0 && now <= last {
                     return false;
                 }

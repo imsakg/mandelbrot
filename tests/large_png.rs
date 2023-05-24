@@ -34,8 +34,8 @@ fn stored_deflate_crosses_block_boundaries_without_dropping_scanline_bytes() {
     assert_eq!(blocks, 2);
     assert_eq!(cursor + 4, compressed.len());
     assert_eq!(decoded.len(), 171 * (128 * 3 + 1));
-    for row in decoded.chunks_exact(128 * 3 + 1) {
+    for row in decoded.as_chunks::<{ 128 * 3 + 1 }>().0 {
         assert_eq!(row[0], 0);
-        assert!(row[1..].chunks_exact(3).all(|p| p == [7, 8, 9]));
+        assert!(row[1..].as_chunks::<3>().0.iter().all(|p| *p == [7, 8, 9]));
     }
 }
