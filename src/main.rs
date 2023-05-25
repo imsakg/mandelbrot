@@ -74,6 +74,7 @@ fn main() {
     loop {
         print!("\x1B[2J\x1B[1;1H"); // clear screen
         let mandelbrot = calculate_mandelbrot(iter, x_min, x_max, y_min, y_max, 100, 24, scale);
+        render_mandelbrot(mandelbrot);
 
         match input.getch().unwrap() as char {
             'q' => break,
@@ -101,7 +102,5 @@ fn main() {
             }
             _ => {}
         }
-
-        render_mandelbrot(mandelbrot);
     }
 }
