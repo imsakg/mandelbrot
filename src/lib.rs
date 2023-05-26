@@ -9,6 +9,8 @@
 //! # Ok::<(), mandelbrot::Error>(())
 //! ```
 
+#![forbid(unsafe_code)]
+
 use num::complex::Complex64;
 mod checksum;
 pub mod cli;

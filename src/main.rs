@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use mandelbrot::{cli::Options, render_parallel, render_rgb_parallel, Image, ImageFormat};
 use std::io::{self, IsTerminal, Read, Write};
 
