@@ -9,7 +9,7 @@ pub enum Action {
 pub fn apply(settings: &mut RenderSettings, key: char) -> Result<Action, Error> {
     let mut next = settings.clone();
     match key {
-        'q' | '\u{1b}' => return Ok(Action::Quit),
+        'q' | '\u{1b}' | '\u{3}' => return Ok(Action::Quit),
         'w' => next.viewport = next.viewport.pan(0.0, -0.1)?,
         's' => next.viewport = next.viewport.pan(0.0, 0.1)?,
         'a' => next.viewport = next.viewport.pan(-0.1, 0.0)?,

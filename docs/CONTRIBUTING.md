@@ -1,6 +1,6 @@
 # Contributing and verification
 
-Use Rust 1.88 or newer. Runtime rendering depends on `num` and `getch`; Naga is a development-only shader validator. The crate and binary forbid unsafe source code, but that does not audit transitive dependencies. Linux and macOS are the supported CI targets; no Windows support is claimed for the termios-backed keyboard adapter.
+Use Rust 1.88 or newer. Runtime rendering depends on `num` and `termios`; Naga is a development-only shader validator. The crate and binary forbid unsafe source code, but that does not audit transitive dependencies. Linux and macOS are the supported CI targets; no Windows support is claimed for the termios-backed keyboard adapter.
 
 Before proposing a change:
 
@@ -10,7 +10,7 @@ cargo clippy --locked --all-targets --all-features -- -D warnings
 cargo test --locked --all-targets --all-features
 cargo test --locked --doc
 cargo build --locked --release
-python3 -m unittest discover -s tests -p 'test_verify_png.py'
+python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
 Test behavior before optimizing it. Serial rendering is the CPU oracle; compare complete orbit results, not timing output or an aggregate checksum alone. Include a failing reproducer for floating-point edge cases. Exercise PNGs with multiple DEFLATE blocks and verify CRC/zlib data using `scripts/verify_png.py`; that checker intentionally supports only this project's RGB8/filter-zero subset.

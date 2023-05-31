@@ -3,19 +3,34 @@
 use mandelbrot::{cli::Options, render_parallel, render_rgb_parallel, Image, ImageFormat};
 use std::io::{self, IsTerminal, Read, Write};
 
-struct TerminalSession;
+struct TerminalSession {
+    saved: termios::Termios,
+}
+impl TerminalSession {
+    fn new() -> io::Result<Self> {
+        let saved = termios::Termios::from_fd(0)?;
+        let mut raw = saved;
+        raw.c_lflag &= !(termios::ICANON | termios::ECHO | termios::ISIG);
+        raw.c_cc[termios::VMIN] = 1;
+        raw.c_cc[termios::VTIME] = 0;
+        termios::tcsetattr(0, termios::TCSADRAIN, &raw)?;
+        let session = Self { saved };
+        io::stdout().write_all(b"\x1b[?1049h\x1b[?25l")?;
+        Ok(session)
+    }
+}
 impl Drop for TerminalSession {
     fn drop(&mut self) {
         let _ = io::stdout().write_all(b"\x1b[?25h\x1b[?1049l");
+        let _ = termios::tcsetattr(0, termios::TCSADRAIN, &self.saved);
     }
 }
 fn interactive(options: Options) -> Result<(), Box<dyn std::error::Error>> {
     if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
         return Err("interactive mode requires an input and output terminal".into());
     }
-    io::stdout().write_all(b"\x1b[?1049h\x1b[?25l")?;
-    let _session = TerminalSession;
-    let input = getch::Getch::new();
+    let _session = TerminalSession::new()?;
+    let mut input = io::stdin().lock();
     let mut explorer = mandelbrot::Explorer::new(options)?;
     loop {
         let options = explorer.options();
@@ -25,7 +40,9 @@ fn interactive(options: Options) -> Result<(), Box<dyn std::error::Error>> {
             write!(out,"\x1b[H{}\x1b[Kiterations={}  {:?}\n\x1b[Kwasd pan | k/j zoom | [] detail | r reset | u/y undo/redo | p palette | q quit\n",if options.color { frame.ansi(&options.colors)? } else { frame.ascii() },options.render.iterations.max_iterations,options.render.iterations.fractal)?;
             out.flush()?;
         }
-        match explorer.key(input.getch()? as char) {
+        let mut key = [0u8; 1];
+        input.read_exact(&mut key)?;
+        match explorer.key(key[0] as char) {
             Ok(mandelbrot::controls::Action::Quit) => break,
             Ok(_) => {}
             Err(error) => {

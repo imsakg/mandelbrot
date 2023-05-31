@@ -40,16 +40,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "getch"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13990e2d5b29e1770ddf7fc000afead4acb9bd8f8a9602de63bf189e261b1ba8"
-dependencies = [
- "libc",
- "termios",
-]
-
-[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -87,9 +77,9 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 name = "mandelbrot"
 version = "0.1.0"
 dependencies = [
- "getch",
  "naga",
  "num",
+ "termios",
 ]
 
 [[package]]

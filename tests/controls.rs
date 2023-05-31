@@ -27,5 +27,7 @@ fn navigation_keys_transform_views_and_keep_iteration_budgets_bounded() {
     }
     assert_eq!(s.iterations.max_iterations, 1);
     assert_eq!(apply(&mut s, 'q').unwrap(), Action::Quit);
+    assert_eq!(apply(&mut s, '\u{1b}').unwrap(), Action::Quit);
+    assert_eq!(apply(&mut s, '\u{3}').unwrap(), Action::Quit);
     assert_eq!(apply(&mut s, '?').unwrap(), Action::None);
 }

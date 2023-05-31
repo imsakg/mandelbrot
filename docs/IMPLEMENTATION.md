@@ -6,7 +6,7 @@
 
 **Architecture:** Keep numeric kernels, viewport geometry, palettes, image encoding and CLI parsing separate. The binary is a thin adapter; serial rendering is the correctness oracle for parallel rendering. GPU material is an optional porting reference, not a claim of hardware acceleration.
 
-**Tech stack:** Rust 2021, existing `num` complex arithmetic and `getch` terminal input; standard-library image encoders and scoped workers.
+**Tech stack:** Rust 2021, existing `num` complex arithmetic and explicit `termios` keyboard state; standard-library image encoders and scoped workers.
 
 ## Sequence and acceptance
 

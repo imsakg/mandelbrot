@@ -16,7 +16,7 @@ cargo run --release -- --help
 
 Add `--color` for 24-bit terminal colors; plain ASCII never emits color escapes. No flag means one ASCII frame and exit, so pipes and automated runs never wait for keyboard input. Interactive mode requires both stdin and stdout to be terminals. It uses a temporary alternate screen and restores the cursor on normal exit or returned errors.
 
-Interactive keys: `wasd` pan by 10% of the visible span, `k`/`+` zoom in, `j`/`-` zoom out, `[`/`]` halve/double the iteration budget, `r` reset bounds, `u` undo, `y` redo, `p` select the palette (visible with `--color`), `q`/Escape quit. Unknown keys do nothing. Undo tracks viewports, not every color/iteration setting.
+Interactive keys: `wasd` pan by 10% of the visible span, `k`/`+` zoom in, `j`/`-` zoom out, `[`/`]` halve/double the iteration budget, `r` reset bounds, `u` undo, `y` redo, `p` select the palette (visible with `--color`), `q`/Escape/Ctrl-C quit. Unknown keys do nothing. Undo tracks viewports, not every color/iteration setting.
 
 ## Export
 
@@ -55,6 +55,8 @@ cargo test --doc
 ```
 
 The library separates orbit kernels, viewport navigation, orbit frames, RGB palettes and image encoding. `render` is the serial correctness oracle; `render_parallel` produces the same row-major samples with scoped workers. `render_with_progress` supports row callbacks and cancellation. `Options::recipe` creates a portable scene description without machine-local paths.
+
+Recipes: `--print-recipe > view.txt`, then `--recipe view.txt` to replay; recipe files cannot request nested reads or output paths. Append `--output scene.png` yourself. `--interior '#112233'` sets exact bounded-sample RGB; `--stats` reports batch timing on stderr.
 
 - [Numerical conventions and limits](docs/NUMERICS.md)
 - [GPU porting reference](docs/GPU.md): WGSL and checked uniform packing, **not a GPU backend**
